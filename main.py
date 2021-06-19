@@ -1,10 +1,7 @@
 import pygame
 import os
-
-from pygame.constants import BUTTON_LEFT, KEYDOWN
-from pygame.event import post
-from pygame.mouse import get_rel
-
+pygame.init()
+pygame.font.init()
 
 class MainWindow:
     def __init__(self):
@@ -17,6 +14,9 @@ class MainWindow:
         self.FPS = 60
         self.BULLET_VEL = 7
         self.MAX_BULLETS = 3
+
+        self.HEALTH_FONT = pygame.font.SysFont("comicsans", 40)
+        self.WINNER_FONT = pygame.font.SysFont('comicsans', 100)
 
         self.GREEN_HIT = pygame.USEREVENT + 1
         self.RED_HIT = pygame.USEREVENT + 2
@@ -38,14 +38,29 @@ class MainWindow:
 
 
         pygame.display.set_caption("My cool game")
-        pygame.init()
 
 
-    def init_window(self, red, green, red_bullets, green_bullets):
-        # self.WINDOW.fill((255, 255, 255))   # WHITE
+    def drawWinner(self, text):
+        winner_text_game_over = self.WINNER_FONT.render(text, 1, (255, 255, 255))
+        self.WINDOW.blit(
+            winner_text_game_over, (
+                self.WIDTH/2 - winner_text_game_over.get_width()/2, self.HEIGHT/2 - winner_text_game_over.get_height()/2
+            )
+        )
+
+        pygame.display.update()
+        pygame.time.delay(5000)
+
+
+    def init_window(self, red, green, red_bullets, green_bullets, red_health, green_health):
         self.WINDOW.blit(self.BACKGROUND_IMAGE, (0, 0))
-
         pygame.draw.rect(self.WINDOW, (0, 0, 0), self.BORDER)
+
+        red_health_text = self.HEALTH_FONT.render("Health: " + str(red_health), 1, (255, 255, 255))
+        green_health_text = self.HEALTH_FONT.render("Health: " + str(green_health), 1, (255, 255, 255))
+        self.WINDOW.blit(red_health_text, (self.WIDTH - red_health_text.get_width() - 10, 10))
+        self.WINDOW.blit(green_health_text, (10, 10))
+
         self.WINDOW.blit(self.GREEN_SPACESHIP, (green.x, green.y))
         self.WINDOW.blit(self.RED_SPACESHIP, (red.x, red.y))
 
@@ -114,6 +129,9 @@ class MainWindow:
         red_bullets = []
         green_bullets = []
 
+        red_health = 10
+        green_health = 10
+
         clock = pygame.time.Clock()
         running = True
         while running:
@@ -121,6 +139,7 @@ class MainWindow:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    pygame.quit()
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LCTRL and len(green_bullets) < self.MAX_BULLETS:
@@ -137,14 +156,30 @@ class MainWindow:
                                 )
                             )
 
+                if event.type == self.RED_HIT:
+                    red_health -= 1
+
+                if event.type == self.GREEN_HIT:
+                    green_health -= 1
+
+            winner_text = ""
+            if red_health <= 0:
+                winner_text = "Player1 Wins!"
+
+            if green_health <= 0:
+                winner_text = "Player2 Wins!"
+
+            if winner_text != "":
+                self.drawWinner(winner_text)
+
             keys_pressed = pygame.key.get_pressed()
             self.handle_red_movement(keys_pressed=keys_pressed)
             self.handle_green_movement(keys_pressed=keys_pressed)
 
             self.handle_bullets(green_bullets, red_bullets)
-            self.init_window(self.red, self.green, red_bullets=red_bullets, green_bullets=green_bullets)
+            self.init_window(self.red, self.green, red_bullets, green_bullets, red_health, green_health)
 
-        pygame.quit()
+        self.main()
 
 
 if __name__ == "__main__":
