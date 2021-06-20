@@ -1,7 +1,10 @@
 import pygame
 import os
+
 pygame.init()
 pygame.font.init()
+pygame.display.init()
+
 
 class MainWindow:
     def __init__(self):
@@ -13,10 +16,11 @@ class MainWindow:
         self.VEL = 5
         self.FPS = 60
         self.BULLET_VEL = 7
-        self.MAX_BULLETS = 3
+        self.MAX_BULLETS = 10
 
         self.HEALTH_FONT = pygame.font.SysFont("comicsans", 40)
         self.WINNER_FONT = pygame.font.SysFont('comicsans', 100)
+        self.EXIT_KEY_PRESSED = pygame.font.SysFont("comicsans", 50)
 
         self.GREEN_HIT = pygame.USEREVENT + 1
         self.RED_HIT = pygame.USEREVENT + 2
@@ -40,13 +44,24 @@ class MainWindow:
         pygame.display.set_caption("My cool game")
 
 
-    def drawWinner(self, text):
+    def drawWinner(self, text, exit_text):
         winner_text_game_over = self.WINNER_FONT.render(text, 1, (255, 255, 255))
+        press_any_key_to_retry = self.EXIT_KEY_PRESSED.render(exit_text, 1, (255, 255, 255))
+
         self.WINDOW.blit(
             winner_text_game_over, (
                 self.WIDTH/2 - winner_text_game_over.get_width()/2, self.HEIGHT/2 - winner_text_game_over.get_height()/2
             )
         )
+        self.WINDOW.blit(
+            press_any_key_to_retry, (
+                self.WIDTH/2 - press_any_key_to_retry.get_width()/2, press_any_key_to_retry.get_height() + winner_text_game_over.get_height() + 300
+            )
+        )
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                self.main()
 
         pygame.display.update()
         pygame.time.delay(5000)
@@ -166,12 +181,13 @@ class MainWindow:
             if red_health <= 0:
                 winner_text = "Player1 Wins!"
 
-            if green_health <= 0:
+            elif green_health <= 0:
                 winner_text = "Player2 Wins!"
 
             if winner_text != "":
-                self.drawWinner(winner_text)
-
+                self.drawWinner(winner_text, None)
+                break
+            
             keys_pressed = pygame.key.get_pressed()
             self.handle_red_movement(keys_pressed=keys_pressed)
             self.handle_green_movement(keys_pressed=keys_pressed)
@@ -179,6 +195,8 @@ class MainWindow:
             self.handle_bullets(green_bullets, red_bullets)
             self.init_window(self.red, self.green, red_bullets, green_bullets, red_health, green_health)
 
+            pygame.display.flip()
+        
         self.main()
 
 
